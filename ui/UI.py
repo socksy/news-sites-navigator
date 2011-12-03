@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import urwid
+import FooterEdit
 
 palette = [('header', 'white', 'dark gray'),
            ('footer', 'white', 'dark gray'),
@@ -17,9 +18,7 @@ listbox = urwid.ListBox(sky)
 
 head_text = urwid.Text("latest news", wrap = 'clip')
 head = urwid.AttrMap(head_text, 'header')
-footer_text = urwid.Text("log in: ")
-foot = urwid.AttrMap(footer_text, 'footer')
-top = urwid.Frame(listbox, head, foot)
+top = urwid.Frame(listbox, head)
 
 def input_display(input, raw):
 
@@ -40,9 +39,18 @@ def key_input(input):
         focus_widget, idx = listbox.get_focus()
         idx = idx+1
         listbox.set_focus(idx)
+    elif input == 'esc':
+        log_in()
         
 def out(s):
     head_text.set_text(str(s))
+    
+    
+def log_in():
+    foot = FooterEdit(' Username: ')
+    view.setfooter(foot)
+    view.setfocus('footer')
+    urwid.connect_signal(foot, 'done')
     
     
 loop = urwid.MainLoop(top, palette,
