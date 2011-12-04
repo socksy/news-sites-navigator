@@ -1,6 +1,30 @@
 import urwid
 import random
 
+class FooterEdit (urwid.Edit):
+    """The widget that lets footer input be taken for commands"""
+
+    __metaclass__ = urwid.signals.MetaSignals
+    signals = ['entered']
+
+    def keypress (self, size, key):
+        if key == 'enter':
+            urwid.emit_signal(self, 'entered', self.get_edit_text())
+            return
+        elif key == 'esc':
+            urwid.emit_signal(self, 'entered', None)
+            return
+        else:
+            urwid.Edit.keypress(self, size, key)
+
+class PasswordEdit (FooterEdit):
+    
+    def keypress (self, size, key):
+        if key == 'enter':
+            urwid.emit_signal(self, 'entered', self.get_edit_text())
+            return
+        
+
 class VotesWidget (urwid.WidgetWrap):
     """A widget that deals with voting information on the left of a story.
 
@@ -22,7 +46,12 @@ class VotesWidget (urwid.WidgetWrap):
         return True
 
     def keypress (self, size, key): #TODO: Selection is broken!
-        return key
+        if key == "j":
+            self.down_wid.set_focus()
+        elif key == "h":
+            self.up_wid.set_focus()
+        else:
+            return key
 
 class LinkText (urwid.Text):
     """Extends the Text widget in order to make it selectable and clickable"""
@@ -47,10 +76,15 @@ class StoryWidget (urwid.WidgetWrap):
                               'left', width=('relative',100), left=3)
         point_widget = VotesWidget(points)
         #internal variable so it can be kept track of for focus reasons
-        self._both = urwid.AttrWrap(urwid.Columns([point_widget, 
-                             ('weight', 5, story)]), 'point body',
-                             'point focus')
-        widget = urwid.Pile([urwid.Divider('-'), self._both, urwid.Divider('-')])
+        self._both = urwid.AttrWrap(urwid.Columns(
+                                        [point_widget, 
+                                        ('weight', 5, story)]),
+                                    'point body',
+                                    'point focus')
+
+        widget = urwid.Pile([urwid.Divider('-'),
+                             self._both,
+                             urwid.Divider('-')])
         self.__super.__init__(widget)
 
     def selectable (self):
@@ -77,9 +111,9 @@ class StoryView (object):
                 ]
 
         self.lorem = [
-                 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sollicitudin, nulla id viverra pulvinar. Cras a magna sit amet felis fringilla lobortis.',
-                 'Sed sollicitudin, nulla id viverra pulvinar.',
-                 'Cras a magna sit amet felis fringilla lobortis.',
+                 u'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                 u'Sed sollicitudin, nulla id viverra pulvinar.',
+                 u'Cras a magna sit amet felis fringilla lobortis.',
          ]
 
         items = []
@@ -87,13 +121,50 @@ class StoryView (object):
             items.append(StoryWidget(i, random.choice(self.lorem)))
 
         listbox = urwid.ListBox(urwid.SimpleListWalker(items))
-        view = urwid.Frame(urwid.AttrWrap(listbox, 'body'))
-        loop = urwid.MainLoop(view, self.palette, 
-                            unhandled_input=self.keystroke)
+        self.view = urwid.Frame(urwid.AttrWrap(listbox, 'body'))
+        loop = urwid.MainLoop(self.view, self.palette, 
+                             unhandled_input=self.keystroke)
         loop.run()
     def keystroke (self, input):
         if input in ('q', 'Q'):
             raise urwid.ExitMainLoop()
+        elif input in ['esc', ':']:
+            self.set_command()
+
+    def set_command(self):
+        self.footer = FooterEdit(':> ')
+        self.view.set_footer(self.footer)
+        self.view.set_focus('footer')
+        urwid.connect_signal(self.footer, 'entered', self.command)
+
+    def command(self, command):
+        urwid.disconnect_signal(self, self.footer, 'entered', self.command)
+        if command in ['quit', 'exit', ':q', 'q']:
+            raise urwid.ExitMainLoop()
+        elif command == "login":
+            self.login()
+        else :
+            self.view.set_focus('body')
+
+    def login(self):
+        self.footer = FooterEdit(u'username: ')
+        self.view.set_footer(self.footer)
+        self.view.set_focus('footer')
+        urwid.connect_signal(self.footer, 'entered', self._user)
+
+    def _user(self, name):
+        urwid.disconnect_signal(self.footer, 'entered', self._user)
+        self.username = name
+        self.footer = PasswordEdit(u"password: ")
+        self.view.set_footer(self.footer)
+        self.view.set_focus('footer')
+        urwid.connect_signal(self.footer, 'entered', self._password)
+
+    def _password(self, password):
+        urwid.disconnect_signal(self.footer, 'entered', self._password)
+        self.password = password
+        self.view.set_focus('body')
+        self.view.set_footer(urwid.Text(self.password))
 
 if __name__ == '__main__':
     StoryView()
