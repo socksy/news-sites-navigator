@@ -1,5 +1,5 @@
 # This file is part of reddit_api.
-# 
+#
 # reddit_api is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with reddit_api.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -35,11 +35,12 @@ class Redditor(RedditContentObject):
         info_url = urls["redditor_about_page"] % user_name
         super(Redditor, self).__init__(reddit_session, user_name, json_dict,
                                        fetch, info_url)
+        self.name = user_name
         self._url = urls["redditor_page"] % user_name
 
     @limit_chars()
     def __str__(self):
-        """Have the str just be the user's name"""
+        """Display the user's name."""
         return self.name.encode("utf8")
 
     @require_login
@@ -54,16 +55,9 @@ class Redditor(RedditContentObject):
     def unfriend(self):
         self.reddit_session._unfriend(self.name)
 
+
 class LoggedInRedditor(Redditor):
     """A class for a currently logged in redditor"""
-
-    def __init__(self, redditor):
-        """Copy constructor"""
-        if not isinstance(redditor, Redditor):
-            raise TypeError("redditor must be a Redditor object")
-        for key, val in redditor.__dict__.iteritems():
-            setattr(self, key, val)
-
     @require_login
     def my_reddits(self, limit=DEFAULT_CONTENT_LIMIT):
         """Return all of the current user's subscribed subreddits."""

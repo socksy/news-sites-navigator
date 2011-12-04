@@ -1,5 +1,5 @@
 # This file is part of reddit_api.
-# 
+#
 # reddit_api is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with reddit_api.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -18,15 +18,11 @@ import warnings
 from functools import wraps
 from urlparse import urljoin
 
+import errors
 import reddit
-import api_exceptions
 from settings import WAIT_BETWEEN_CALL_TIME
 from urls import urls
 
-ERROR_MAPPING = {'USER_REQUIRED'  : api_exceptions.NotLoggedInException,
-                 'WRONG_PASSWORD' : api_exceptions.InvalidUserPass,
-                 'RATELIMIT'      : api_exceptions.RateLimitExceeded,
-                 'BAD_CAPTCHA'    : api_exceptions.BadCaptcha}
 
 class require_captcha(object):
     """Decorator for methods that require captchas."""
@@ -50,25 +46,25 @@ class require_captcha(object):
                     self.get_captcha(caller)
                     kwargs['captcha'] = self.captcha_as_dict
                 return self.func(caller, *args, **kwargs)
-            except api_exceptions.BadCaptcha:
+            except errors.BadCaptcha:
                 do_captcha = True
 
     @property
     def captcha_as_dict(self):
-        return {"iden" : self.captcha_id, "captcha" : self.captcha}
+        return {'iden': self.captcha_id, 'captcha': self.captcha}
 
     @property
     def captcha_url(self):
         if self.captcha_id:
-            return urljoin(urls["view_captcha"], self.captcha_id + ".png")
+            return urljoin(urls['view_captcha'], self.captcha_id + '.png')
 
     def get_captcha(self, caller):
         # This doesn't support the api_type:json parameter yet
-        data = caller._request_json(urls["new_captcha"],
-                                    {"renderstyle" : "html"})
-        self.captcha_id = data["jquery"][-1][-1][-1]
-        print "Captcha URL: " + self.captcha_url
-        self.captcha = raw_input("Captcha: ")
+        data = caller._request_json(urls['new_captcha'],
+                                    {'renderstyle': 'html'})
+        self.captcha_id = data['jquery'][-1][-1][-1]
+        print 'Captcha URL: ' + self.captcha_url
+        self.captcha = raw_input('Captcha: ')
 
 
 def require_login(func):
@@ -84,10 +80,11 @@ def require_login(func):
             modhash = self.reddit_session.modhash
 
         if user is None or modhash is None:
-            raise api_exceptions.NotLoggedInException()
+            raise errors.LoginRequired('"%s" requires login.' % func.__name__)
         else:
             return func(self, *args, **kwargs)
     return login_reqd_func
+
 
 class sleep_after(object):
     """
@@ -116,6 +113,7 @@ class sleep_after(object):
         self.__class__.last_call_time = call_time
         return self.func(*args, **kwargs)
 
+
 def parse_api_json_response(func):
     """Decorator to look at the Reddit API response to an API POST request like
     vote, subscribe, login, etc. Basically, it just looks for certain errors in
@@ -126,7 +124,8 @@ def parse_api_json_response(func):
         return_value = func(*args, **kwargs)
         if isinstance(return_value, dict):
             for k in return_value:
-                if k not in ('data', 'kind', 'errors'):
+                allowed = ('data', 'errors', 'kind', 'next', 'prev', 'users')
+                if k not in allowed:
                     # The only jquery response we want to allow is captcha
                     if k == 'jquery':
                         try:
@@ -134,19 +133,19 @@ def parse_api_json_response(func):
                             continue
                         except:
                             pass
-                    warnings.warn("Unknown return value key: %s" % k)
+                    warnings.warn('Unknown return value key: %s' % k)
             if 'errors' in return_value and return_value['errors']:
                 error_list = []
                 for item in return_value['errors']:
-                    error, msg, other = item
-                    if error in ERROR_MAPPING:
-                        error_list.append(ERROR_MAPPING[error](msg))
+                    error_type, msg, field = item
+                    if error_type in errors.ERROR_MAPPING:
+                        error_class = errors.ERROR_MAPPING[error_type]
                     else:
-                        error_list.append(Exception('(Unknown) %s: %s (%s)' %
-                                                    (error, msg, other)))
+                        error_class = errors.APIException
+                    error_list.append(error_class(*item))
                 if len(error_list) == 1:
                     raise error_list[0]
                 else:
-                    raise api_exceptions.ExceptionList(error_list)
+                    raise errors.ExceptionList(error_list)
         return return_value
     return error_checked_func

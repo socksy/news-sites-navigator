@@ -1,8 +1,18 @@
-#Mostly pseudo code
+class StoryList():
+    """A list of stories
+    
+    It has:
+    id --- a string representing this collection of stories, such as a subreddit, or a twitter username etc.
+    stories --- the list of stories themselves
+    """
+
+    def __init__ (self, id, stories=[]):
+        self.stories = stories
+        self.id = id
 
 class Story():
 
-    """Representation of a story in reddit, HN.
+    """Representation of a story in reddit, HN, etc.
 
     Keeps a representation of a one story item. It contains:
     text --- the text of the story, e.g. the title.
@@ -17,7 +27,7 @@ class Story():
     def __init__(self, text, content=None, comment_list=None, points=None):
         
         self.text = text
-        self.content = uri
+        self.content = content
         self.comment_list = comment_list
         self.points = points
 
@@ -76,11 +86,3 @@ class Username():
         self.username = username
         self.info = info
         self.points = points
-
-def login (username, password):
-    #do login
-    pass
-
-def submit_story(story_title, story_text=None, story_url=None):
-    #blah
-    pass
