@@ -3,6 +3,12 @@ import random
 
 class VotesWidget (urwid.WidgetWrap):
 
+    """A widget that deals with voting information on the left of a story.
+
+    This widget is constructed with a pile widget with an up arrow button,
+    the number of points that the story has gained, and a down arrow button.
+    """
+
     def __init__ (self, points):
         up = urwid.Padding(urwid.AttrWrap(urwid.Button(u'\u21d1'),
                               'body', 'focus'), 'center', 5)
@@ -17,10 +23,12 @@ class VotesWidget (urwid.WidgetWrap):
     def selectable (self):
         return True
 
-    def keypress (self, size, key):
+    def keypress (self, size, key): #TODO: Selection is broken!
         return key
 
 class LinkText (urwid.Text):
+
+    """Extends the Text widget in order to make it selectable and clickable"""
     
     def __init__ (self, markup, align='left', wrap='space', layout=None):
         self.__super.__init__(markup, align, wrap, layout)
@@ -29,10 +37,11 @@ class LinkText (urwid.Text):
         return True
 
     def keypress (self, size, key):
-        return key
+        return key #TODO make this send a signal or something when clicked
 
 class StoryWidget (urwid.WidgetWrap):
 
+    """Combines the LinkText widget and Votes widget in two columns."""
     def __init__ (self, points, title):
         story_text = urwid.AttrWrap(LinkText(title, wrap="space"),
                                     'point_focus', 'focus')
