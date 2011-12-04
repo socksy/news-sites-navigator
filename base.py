@@ -1,4 +1,4 @@
-class StoryList():
+class StoryList(object):
     """A list of stories
     
     It has:
@@ -10,7 +10,7 @@ class StoryList():
         self.stories = stories
         self.id = id
 
-class Story():
+class Story(object):
 
     """Representation of a story in reddit, HN, etc.
 
@@ -31,16 +31,8 @@ class Story():
         self.comment_list = comment_list
         self.points = points
 
-    def comment_on_story(self, comment_text):
-        """Comments with comment_text, will fail if not logged in"""
-        #do comment if logged in
-        pass
 
-    def vote(up=True):
-        """Votes up on a story, or takes a boolean for whether up or down"""
-        pass
-
-class Comment():
+class Comment(object):
 
     """Represents a comment on a story, or on a comment within a story.
 
@@ -61,16 +53,8 @@ class Comment():
         self.subcomments = subcomments
         self.points = points
 
-    def reply(self, comment_text):
-        """Replies with comment_text. Will fail if not logged in."""
-        #reply to this comment if logged in
-        pass
-    
-    def vote(up=True):
-        """Votes up on a comment, or takes a boolean for whether up or down"""
-        pass
 
-class Username():
+class Username(object):
 
     """Represents a username on a system
 
