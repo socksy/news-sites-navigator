@@ -24,8 +24,9 @@ class Story(object):
     a story, vote().
     """
 
-    def __init__(self, text, content=None, comment_list=None, points=None):
+    def __init__(self, storyID, text, content=None, comment_list=None, points=None):
         
+        self.storyID = storyID
         self.text = text
         self.content = content
         self.comment_list = comment_list
@@ -47,7 +48,8 @@ class Comment(object):
     vote().
     """
 
-    def __init__(self, username, text, subcomments=None, points=None):
+    def __init__(self, commentID, username, text, subcomments=None, points=None):
+        self.commentID = commentID
         self.username = username
         self.text = text
         self.subcomments = subcomments
