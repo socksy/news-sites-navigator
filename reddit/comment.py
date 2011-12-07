@@ -36,7 +36,7 @@ class Comment(RedditContentObject, Voteable,  Deletable):
         self.parent = None
         self.submission = None
 
-    @limit_chars()
+    #@limit_chars()
     def __str__(self):
         return getattr(self, "body",
                        "[[ need to fetch more comments... ]]").encode("utf8")
@@ -76,7 +76,7 @@ class MoreComments(RedditContentObject):
     def _update_submission(self, _):
         pass
 
-    @limit_chars()
+    #@limit_chars()
     def __str__(self):
         return "[[ need to fetch more comments... ]]".encode("utf8")
 
