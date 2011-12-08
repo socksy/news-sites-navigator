@@ -1,5 +1,6 @@
 import urwid
 import random
+import Reddit
 
 class FooterEdit (urwid.Edit):
     """The widget that lets footer input be taken for commands"""
@@ -110,15 +111,15 @@ class StoryView (object):
                 ('point focus', 'dark cyan', 'dark gray', 'bold')
                 ]
 
-        self.lorem = [
-                 u'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                 u'Sed sollicitudin, nulla id viverra pulvinar.',
-                 u'Cras a magna sit amet felis fringilla lobortis.',
-         ]
+        r = Reddit.Reddit()
+        storyList = r.load_stories("opensource")
+        self.title = []
+        for story in storyList.stories:
+        	self.title.append(story.text)
 
         items = []
-        for i in range(1,101):
-            items.append(StoryWidget(i, random.choice(self.lorem)))
+        for i in range(0,len(self.title)):
+            items.append(StoryWidget(i+1, self.title[i]))
 
         listbox = urwid.ListBox(urwid.SimpleListWalker(items))
         self.view = urwid.Frame(urwid.AttrWrap(listbox, 'body'))
