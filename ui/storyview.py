@@ -111,8 +111,8 @@ class StoryView (object):
                 ('point focus', 'dark cyan', 'dark gray', 'bold')
                 ]
 
-        r = Reddit.Reddit()
-        storyList = r.load_stories("opensource")
+        self.r = Reddit.Reddit()
+        storyList = self.r.load_stories("opensource")
         self.title = []
         for story in storyList.stories:
         	self.title.append(story.text)
@@ -166,6 +166,7 @@ class StoryView (object):
         self.password = password
         self.view.set_focus('body')
         self.view.set_footer(urwid.Text(self.password))
+       
 
 if __name__ == '__main__':
     StoryView()
