@@ -10,7 +10,7 @@ class CommentNode(urwid.TreeNode):
     def load_widget(self):
         return CommentWidget(self)
         
-class CommentParentNode(urwid.parentNode):
+class CommentParentNode(urwid.ParentNode):
     def load_widget(self):
         return CommentTreeWidget(self)
     
@@ -66,8 +66,8 @@ class CommentBrowser:
             footer=self.footer )
             
     def main(self):
-        self.loop = urwid.Mainloop(self.view, self.palette,
-            unhandled_input=self.unhandled_input)
+        self.loop = urwid.MainLoop(self.view, self.palette,
+            unhandled_input=self.quit_input)
         self.loop.run()
         
     def quit_input(self, k):
@@ -76,7 +76,7 @@ class CommentBrowser:
             
 def get_comment_tree():
     retval = {"name":"comment1","reply":[]}
-    for i range(10):
+    for i in range(10):
         retval['reply'].append({"name":"troll"})
         retval['reply'][i]['reply']=[]
         retval['reply'][i]['reply'].append({"name":"troll2"})
