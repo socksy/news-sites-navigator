@@ -156,7 +156,7 @@ class StoryView (object):
     def _user(self, name):
         urwid.disconnect_signal(self.footer, 'entered', self._user)
         self.username = name
-        self.footer = PasswordEdit(u"password: ")
+        self.footer = FooterEdit(u"password: ")
         self.view.set_footer(self.footer)
         self.view.set_focus('footer')
         urwid.connect_signal(self.footer, 'entered', self._password)
@@ -164,8 +164,10 @@ class StoryView (object):
     def _password(self, password):
         urwid.disconnect_signal(self.footer, 'entered', self._password)
         self.password = password
+        if self.r.login(self.username, self.password):
+        	self.logged_in = "Login Successfull!"
         self.view.set_focus('body')
-        self.view.set_footer(urwid.Text(self.password))
+        self.view.set_footer(urwid.Text(self.a))
        
 
 if __name__ == '__main__':
