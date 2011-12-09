@@ -16,15 +16,7 @@ class FooterEdit (urwid.Edit):
             urwid.emit_signal(self, 'entered', None)
             return
         else:
-            urwid.Edit.keypress(self, size, key)
-
-class PasswordEdit (FooterEdit):
-    
-    def keypress (self, size, key):
-        if key == 'enter':
-            urwid.emit_signal(self, 'entered', self.get_edit_text())
-            return
-        
+            urwid.Edit.keypress(self, size, key)        
 
 class VotesWidget (urwid.WidgetWrap):
     """A widget that deals with voting information on the left of a story.
@@ -105,21 +97,18 @@ class StoryView (object):
     def __init__(self):
         self.palette = [
                 ('body', 'dark cyan', '', 'standout', '#f96', ''),
-                ('focus', 'white', 'dark magenta', 'standout,underline',
+                ('focus', 'white', 'dark blue', 'standout,underline',
                     '#f96', '#063'),
                 ('point body', 'dark cyan', '', ''),
-                ('point focus', 'dark cyan', 'dark gray', 'bold')
+                ('point focus', 'dark cyan', '', 'bold')
                 ]
 
         self.r = Reddit.Reddit()
         storyList = self.r.load_stories("opensource")
-        self.title = []
-        for story in storyList.stories:
-        	self.title.append(story.text)
 
         items = []
-        for i in range(0,len(self.title)):
-            items.append(StoryWidget(i+1, self.title[i]))
+        for i in range(0,len(storyList.stories)):
+            items.append(StoryWidget(i+1, storyList.stories[i].text))
 
         listbox = urwid.ListBox(urwid.SimpleListWalker(items))
         self.view = urwid.Frame(urwid.AttrWrap(listbox, 'body'))
