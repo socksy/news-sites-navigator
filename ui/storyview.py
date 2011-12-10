@@ -26,9 +26,11 @@ class VotesWidget (urwid.WidgetWrap):
     """
 
     def __init__ (self, points):
-        self.up_wid = urwid.Padding(urwid.AttrWrap(urwid.Button(u'\u21d1'),
+    	self.up = urwid.Button(u'\u21d1')
+    	self.down = urwid.Button(u'\u21d3')
+        self.up_wid = urwid.Padding(urwid.AttrWrap(self.up,
                               'body', 'focus'), 'center', 5)
-        self.down_wid = urwid.Padding(urwid.AttrWrap(urwid.Button(u'\u21d3'), 
+        self.down_wid = urwid.Padding(urwid.AttrWrap(self.down, 
                              'body', 'focus'), 'center', 5)
         point_element = urwid.Padding(urwid.Text(str(points)), 'center',
                                       'pack', len(str(points)), 1, 1)
@@ -38,13 +40,6 @@ class VotesWidget (urwid.WidgetWrap):
     def selectable (self):
         return True
 
-    def keypress (self, size, key): #TODO: Selection is broken!
-        if key == "j":
-            self.down_wid.set_focus()
-        elif key == "h":
-            self.up_wid.set_focus()
-        else:
-            return key
 
 class LinkText (urwid.Text):
     """Extends the Text widget in order to make it selectable and clickable"""
@@ -63,7 +58,9 @@ class StoryWidget (urwid.WidgetWrap):
     """Combines the LinkText widget and Votes widget in two columns."""
 
     def __init__ (self, points, title):
-        story_text = urwid.AttrWrap(LinkText(title, wrap="space"),
+    	self.opened = False
+    	self.linktext = LinkText(title, wrap="space")
+        story_text = urwid.AttrWrap(self.linktext,
                                     'point_focus', 'focus')
         story = urwid.Padding(story_text,
                               'left', width=('relative',100), left=3)
@@ -83,14 +80,6 @@ class StoryWidget (urwid.WidgetWrap):
     def selectable (self):
         return True
 
-    def keypress (self, size, key):
-        if key in ["right", "l"]:
-            self._both.original_widget.set_focus(1)
-        elif key in ["left", "h"]:
-            self._both.original_widget.set_focus(0)
-        else:
-            return key
-
 
 class StoryView (object):
 
@@ -104,22 +93,34 @@ class StoryView (object):
                 ]
 
         self.r = Reddit.Reddit()
-        storyList = self.r.load_stories("opensource")
+        self.storyList = self.r.load_stories("opensource")
 
-        items = []
-        for i in range(0,len(storyList.stories)):
-            items.append(StoryWidget(i+1, storyList.stories[i].text))
+        self.items = []
+        for i in range(0,len(self.storyList.stories)):
+            self.items.append(StoryWidget(i+1, self.storyList.stories[i].text))
 
-        listbox = urwid.ListBox(urwid.SimpleListWalker(items))
-        self.view = urwid.Frame(urwid.AttrWrap(listbox, 'body'))
-        loop = urwid.MainLoop(self.view, self.palette, 
+        self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
+        self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
+        self.loop = urwid.MainLoop(self.view, self.palette, 
                              unhandled_input=self.keystroke)
-        loop.run()
+        self.loop.run()
+        
     def keystroke (self, input):
         if input in ('q', 'Q'):
             raise urwid.ExitMainLoop()
         elif input in ['esc', ':']:
             self.set_command()
+        elif input in ["enter"]:
+        	self.focus = self.listbox.get_focus()
+        	if isinstance(self.focus[0], StoryWidget):
+        		if self.focus[0].opened:
+        			story = self.storyList.stories[self.focus[1]]
+        			self.focus[0].linktext.set_text(story.text)
+        			self.focus[0].opened = False
+		       	else:
+		       		self.showComment(self.focus[1])
+		       		self.focus[0].opened = True
+		
 
     def set_command(self):
         self.footer = FooterEdit(':> ')
@@ -156,8 +157,30 @@ class StoryView (object):
         if self.r.login(self.username, self.password):
         	self.logged_in = "Login Successfull!"
         self.view.set_focus('body')
-        self.view.set_footer(urwid.Text(self.a))
-       
+        self.view.set_footer(urwid.Text(self.a))       
+    
+    def compose(self, comment_list, i):
+		result = ""
+		for a in range(i):
+			result = result + "    "
+		for com in comment_list:
+   			if len(com.subcomments) > 0:
+   				result += "--" + com.text + "\n" + self.compose(com.subcomments, i+1)
+   			else:
+   				for a in range(i):
+					result = result + "    "
+   				result += "--" + com.text + "\n"
+   		return result
+        
+    def showComment(self, i):
+    	story = self.storyList.stories[i]
+    	storyID = story.storyID
+    	comment_list = self.r.load_comments(storyID).comment_list
+    	content = story.text + "\nComment:\n"
+    	content += self.compose(comment_list, 0)
+    	self.focus[0].linktext.set_text(content)
+    
+	
 
 if __name__ == '__main__':
     StoryView()
