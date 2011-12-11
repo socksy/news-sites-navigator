@@ -97,12 +97,8 @@ class StoryView (object):
 
         self.r = Reddit.Reddit()
         self.storyList = self.r.load_stories("opensource")
+        self.load_stories(self.storyList)
 
-        self.items = []
-        self.run_time_list = []
-        for story in self.storyList.stories:
-            self.items.append(StoryWidget(story.points, story.text, 10))
-            self.run_time_list.append(story)
         urwid.connect_signal(up, 'click', self.on_click_up)
         urwid.connect_signal(down, 'click', self.on_click_down)
 
@@ -120,22 +116,40 @@ class StoryView (object):
             self.focus = self.listbox.get_focus()
             self.type_comment()
         elif input in ["enter"]:
-            self.focus = self.listbox.get_focus()
-            if isinstance(self.focus[0], StoryWidget):
-                now_focus = self.focus[1]
-                if self.focus[0].opened:
-                    self.close_comment(self.focus[1])
-                    self.view.get_body().set_focus(now_focus)
-                    self.focus[0].opened = False
-                else:
-                    item = self.run_time_list[self.focus[1]]
-                    if isinstance(item, base.Story):
-                        storyID = item.storyID
-                        self.run_time_list[self.focus[1]] = self.r.load_comments(storyID)
-                    self.showComment(self.focus[1])
-                    self.view.get_body().set_focus(now_focus)
-                    self.focus[0].opened = True
-        			
+		self.focus = self.listbox.get_focus()
+          	if isinstance(self.run_time_list[self.focus[1]], StoryWidget):
+                	self.storyList = self.r.load_more()
+                	self.load_stories(self.storyList)
+                	self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
+                	self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
+                	self.loop.widget = self.view
+                	self.view.get_body().set_focus(len(self.storyList.stories))            
+     		elif isinstance(self.items[self.focus[1]], StoryWidget):
+                	now_focus = self.focus[1]
+                	if self.focus[0].opened:
+                    		self.close_comment(self.focus[1])
+                    		self.view.get_body().set_focus(now_focus)
+                    		self.focus[0].opened = False
+                	else:
+                    		item = self.run_time_list[self.focus[1]]
+                    		if isinstance(item, base.Story):
+                        		storyID = item.storyID
+                        		self.run_time_list[self.focus[1]] = self.r.load_comments(storyID)
+                    		self.showComment(self.focus[1])
+                    		self.view.get_body().set_focus(now_focus)
+                    		self.focus[0].opened = True
+
+    
+    def load_stories(self, storyList):
+        self.items = []
+        self.run_time_list = []
+        for story in self.storyList.stories:
+            self.items.append(StoryWidget(story.points, story.text, 10))
+            self.run_time_list.append(story)
+        load_more = StoryWidget("", "-------Load More News-------",10)
+        self.items.append(load_more)
+        self.run_time_list.append(load_more)        
+
     def set_command(self):
         self.footer = FooterEdit(':> ')
         self.view.set_footer(self.footer)
@@ -190,7 +204,7 @@ class StoryView (object):
     def get_text(self, comment_list):
         result_list = []
         for com in comment_list:
-            result_list.append(com.text + "\nBy user: q" + com.username)
+            result_list.append(com.text + "\nBy user: " + com.username)
         return result_list
 	
     def showComment(self, i):

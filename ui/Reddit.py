@@ -20,7 +20,7 @@ class Reddit(session.Session):
 		self.info = info
 		self.limit += 5
 		submissions =  self.r.get_subreddit(info).get_hot(self.limit)
-		storyList = base.StoryList(info)
+		storyList = base.StoryList(info, [])
 		for sub in submissions:
 			story = base.Story(sub.id, sub.title, sub.permalink, [], sub.score)
 			storyList.stories.append(story)
