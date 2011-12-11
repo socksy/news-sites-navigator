@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import urwid
 import reddit_api as Reddit
 import base
