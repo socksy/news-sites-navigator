@@ -55,32 +55,31 @@ class Reddit(session.Session):
 			story.add_comment(comment_text)
 		else:
 			return "Error, please login first!"
-	
+
 	def reply_to_comment(self, storyID, commentID, comment_text):
 		if self.logged_in:
 			story = self.r.get_submission(storyID)
-			comment = None
-			for com in story.comments:
-				if com.id == commentID:
-					comment = com
+            		comment = None
+            		for com in story.comments:
+                		if comment == None:
+                    			comment = self.get_com(com, commentID)
 			comment.reply(comment_text)
 		else:
 			return "Error, please login first!"
 		
 	def vote(self, storyID, commentID, up):
 		if self.logged_in:
+            		story = self.r.get_submission(storyID)
 			if commentID == None:
-				story = self.r.get_submission(storyID)
 				if up:
 					story.upvote()
 				else:
 					story.downvote()
 			else:
-				story = self.r.get_submission(storyID)
-				comment = None
-				for com in story.comments:
-					if com.id == commentID:
-						comment = com
+                		comment = None
+                		for com in story.comments:
+                    			if comment == None:
+                        			comment = self.get_com(com, commentID)
 				if up:
 					comment.upvote()
 				else:
@@ -88,3 +87,12 @@ class Reddit(session.Session):
 			return "OK"
 		else:
 			return "Error, please login first!"
+
+    	def get_com(self, comment, commentID):
+            result = None
+            for rep in comment.replies:
+                if rep.id == commentID:
+                    result = rep
+                else:
+                    result = self.get_com(rep, commentID)
+            return result

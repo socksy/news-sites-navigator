@@ -100,9 +100,9 @@ class StoryView (object):
 
         self.items = []
         self.run_time_list = []
-        for i in range(0,len(self.storyList.stories)):
-            self.items.append(StoryWidget(i+1, self.storyList.stories[i].text, 10))
-            self.run_time_list.append(self.storyList.stories[i])
+        for story in self.storyList.stories:
+            self.items.append(StoryWidget(story.points, story.text, 10))
+            self.run_time_list.append(story)
         urwid.connect_signal(up, 'click', self.on_click_up)
         urwid.connect_signal(down, 'click', self.on_click_down)
 
@@ -196,7 +196,7 @@ class StoryView (object):
     def get_text(self, comment_list):
         result_list = []
         for com in comment_list:
-            result_list.append(com.text)
+            result_list.append(com.text + "\nBy user: " + com.username)
         return result_list
 	
     def showComment(self, i):
