@@ -85,5 +85,6 @@ class Reddit(session.Session):
 					comment.upvote()
 				else:
 					comment.downvote()
+			return "OK"
 		else:
 			return "Error, please login first!"

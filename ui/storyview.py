@@ -2,6 +2,9 @@ import urwid
 import random
 import Reddit
 
+up = urwid.Button(u'\u21d1')
+down = urwid.Button(u'\u21d3')
+
 class FooterEdit (urwid.Edit):
     """The widget that lets footer input be taken for commands"""
 
@@ -26,11 +29,9 @@ class VotesWidget (urwid.WidgetWrap):
     """
 
     def __init__ (self, points):
-    	self.up = urwid.Button(u'\u21d1')
-    	self.down = urwid.Button(u'\u21d3')
-        self.up_wid = urwid.Padding(urwid.AttrWrap(self.up,
+        self.up_wid = urwid.Padding(urwid.AttrWrap(up,
                               'body', 'focus'), 'center', 5)
-        self.down_wid = urwid.Padding(urwid.AttrWrap(self.down, 
+        self.down_wid = urwid.Padding(urwid.AttrWrap(down, 
                              'body', 'focus'), 'center', 5)
         point_element = urwid.Padding(urwid.Text(str(points)), 'center',
                                       'pack', len(str(points)), 1, 1)
@@ -98,6 +99,9 @@ class StoryView (object):
         self.items = []
         for i in range(0,len(self.storyList.stories)):
             self.items.append(StoryWidget(i+1, self.storyList.stories[i].text))
+    	
+    	urwid.connect_signal(up, 'click', self.on_click_up)
+    	urwid.connect_signal(down, 'click', self.on_click_down)
 
         self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
         self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
@@ -127,6 +131,13 @@ class StoryView (object):
         self.view.set_footer(self.footer)
         self.view.set_focus('footer')
         urwid.connect_signal(self.footer, 'entered', self.command)
+        
+    def on_click_up(self, button):
+		self.focus = self.listbox.get_focus()
+		story = self.storyList.stories[self.focus[1]]
+		storyID = story.storyID
+		result = self.r.vote(storyID, None, True)
+		self.view.set_footer(urwid.Text(result))	
 
     def command(self, command):
         urwid.disconnect_signal(self, self.footer, 'entered', self.command)
@@ -136,6 +147,13 @@ class StoryView (object):
             self.login()
         else :
             self.view.set_focus('body')
+            
+    def on_click_down(self, button):
+		self.focus = self.listbox.get_focus()
+		story = self.storyList.stories[self.focus[1]]
+		storyID = story.storyID
+		result = self.r.vote(storyID, None, False)
+		self.view.set_footer(urwid.Text(result))	
 
     def login(self):
         self.footer = FooterEdit(u'username: ')
@@ -157,7 +175,7 @@ class StoryView (object):
         if self.r.login(self.username, self.password):
         	self.logged_in = "Login Successfull!"
         self.view.set_focus('body')
-        self.view.set_footer(urwid.Text(self.a))       
+        self.view.set_footer(urwid.Text(self.logged_in))       
     
     def compose(self, comment_list, i):
 		result = ""
