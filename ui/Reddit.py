@@ -53,6 +53,7 @@ class Reddit(session.Session):
 		if self.logged_in:
 			story = self.r.get_submission(storyID)
 			story.add_comment(comment_text)
+            		return True
 		else:
 			return "Error, please login first!"
 
@@ -64,6 +65,7 @@ class Reddit(session.Session):
                 		if comment == None:
                     			comment = self.get_com(com, commentID)
 			comment.reply(comment_text)
+            		return True
 		else:
 			return "Error, please login first!"
 		

@@ -116,21 +116,15 @@ class StoryView (object):
             raise urwid.ExitMainLoop()
         elif input in ['esc', ':']:
             self.set_command()
-        elif input in ["f"]:
-            self.view.set_footer(urwid.Text(str(self.run_time_list[4].text)))
+        elif input in ["c"]:
+            self.focus = self.listbox.get_focus()
+            self.type_comment()
         elif input in ["enter"]:
             self.focus = self.listbox.get_focus()
             if isinstance(self.focus[0], StoryWidget):
                 now_focus = self.focus[1]
                 if self.focus[0].opened:
-                    weight = self.focus[0].weight
-                    i = self.focus[1] + 1
-                    while i < len(self.items) and self.items[i].weight < weight:
-                        del self.items[i]
-                        del self.run_time_list[i]
-                    self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
-                    self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
-                    self.loop.widget = self.view
+                    self.close_comment(self.focus[1])
                     self.view.get_body().set_focus(now_focus)
                     self.focus[0].opened = False
                 else:
@@ -196,7 +190,7 @@ class StoryView (object):
     def get_text(self, comment_list):
         result_list = []
         for com in comment_list:
-            result_list.append(com.text + "\nBy user: " + com.username)
+            result_list.append(com.text + "\nBy user: q" + com.username)
         return result_list
 	
     def showComment(self, i):
@@ -214,17 +208,51 @@ class StoryView (object):
         for com in com_str_list:
             b = b + 1
             if len(self.run_time_list[b].subcomments) > 0:
-                self.items.insert(b, StoryWidget("Comments", com, self.focus[0].weight-2))
+                self.items.insert(b, StoryWidget("Comments", com, self.items[i].weight-2))
             else:
-                self.items.insert(b, StoryWidget("Comment", com, self.focus[0].weight-2))
+                self.items.insert(b, StoryWidget("Comment", com, self.items[i].weight-2))
         self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
         self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
         self.loop.widget = self.view    	
 
+    def close_comment(self, i):
+        weight = self.items[i].weight
+        a = i + 1
+        while a < len(self.items) and self.items[a].weight < weight:
+            del self.items[a]
+            del self.run_time_list[a]
+        self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
+        self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
+        self.loop.widget = self.view
 
-        
-		
-
+    def type_comment(self):
+        self.footer = FooterEdit('Comment text:> ')
+        self.view.set_footer(self.footer)
+        self.view.set_focus('footer')
+        urwid.connect_signal(self.footer, 'entered', self.comment_on_item)        
+    
+    def comment_on_item(self, text):
+        urwid.disconnect_signal(self.footer, 'entered', self.comment_on_item)
+        item = self.run_time_list[self.focus[1]]
+        if isinstance(item, base.Story):                                       
+            storyID = item.storyID
+            result = self.r.comment_on_story(storyID, text)
+            if result == True:
+                self.view.set_footer(urwid.Text("Comment Successfull! Please reload the comment page."))
+            else:
+                self.view.set_footer(urwid.Text(result))
+        else:
+            commentID = item.commentID
+            i = self.focus[1] - 1
+            while not isinstance(self.run_time_list[i], base.Story):
+                i = i - 1
+            storyID = self.run_time_list[i].storyID
+            result = self.r.reply_to_comment(storyID, commentID, text)
+            if result == True:
+                self.view.set_footer(urwid.Text("Reply Successfull! Please reload the comment page."))
+            else:
+                self.view.set_footer(urwid.Text(result))
+        self.view.set_focus('body')
 
 if __name__ == '__main__':
     StoryView()
