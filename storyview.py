@@ -93,16 +93,23 @@ class StoryView (object):
                 ('point body', 'dark cyan', '', ''),
                 ('point focus', 'dark cyan', '', 'bold')
                 ]
-
+	
+	#load hottest 5 news in "opensource"
         self.r = Reddit.Reddit()
         self.storyList = self.r.load_stories("opensource")
         self.load_stories(self.storyList)
-
+	
+	#connect two vote buttions to response functions
         urwid.connect_signal(up, 'click', self.on_click_up)
         urwid.connect_signal(down, 'click', self.on_click_down)
-
+	
+	#display the widgets
         self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
         self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
+	self.view.set_header(urwid.Text('Help: "q" -- quit, "c" -- comment or' + 
+					' reply to focus story or comment, "esc" or' +
+					' ":" -- open footer for command input' + 
+					'\ncommand support: "login" "quit"'))
         self.loop = urwid.MainLoop(self.view, self.palette, unhandled_input=self.keystroke)
         self.loop.run()
         
@@ -116,19 +123,23 @@ class StoryView (object):
             self.type_comment()
         elif input in ["enter"]:
 		self.focus = self.listbox.get_focus()
+		#if focus is "---Load More News---", load more stories
           	if isinstance(self.run_time_list[self.focus[1]], StoryWidget):
                 	self.storyList = self.r.load_more()
                 	self.load_stories(self.storyList)
                 	self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
                 	self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
                 	self.loop.widget = self.view
-                	self.view.get_body().set_focus(len(self.storyList.stories))            
+                	self.view.get_body().set_focus(len(self.storyList.stories))
+		#if focus is on the title of news, show or close comment page           
      		elif isinstance(self.items[self.focus[1]], StoryWidget):
                 	now_focus = self.focus[1]
+			#if comment page is open, close it
                 	if self.focus[0].opened:
                     		self.close_comment(self.focus[1])
                     		self.view.get_body().set_focus(now_focus)
                     		self.focus[0].opened = False
+			#if comment page not open, open it
                 	else:
                     		item = self.run_time_list[self.focus[1]]
                     		if isinstance(item, base.Story):
@@ -140,7 +151,13 @@ class StoryView (object):
 
     
     def load_stories(self, storyList):
-        self.items = []
+
+	""" load news data and stored in widgets lists, 
+	    finally show the new widgets
+	storyList -- base.StoryList
+	"""
+
+	self.items = []
         self.run_time_list = []
         for story in self.storyList.stories:
             self.items.append(StoryWidget(story.points, story.text, 10))
@@ -150,12 +167,18 @@ class StoryView (object):
         self.run_time_list.append(load_more)        
 
     def set_command(self):
+
+	""" open footer and allow user input """
+
         self.footer = FooterEdit(':> ')
         self.view.set_footer(self.footer)
         self.view.set_focus('footer')
         urwid.connect_signal(self.footer, 'entered', self.command)
         
     def on_click_up(self, button):
+
+	""" response to vote up button """
+
         self.focus = self.listbox.get_focus()
         story = self.storyList.stories[self.focus[1]]
         storyID = story.storyID
@@ -163,6 +186,9 @@ class StoryView (object):
         self.view.set_footer(urwid.Text(result))	
 
     def command(self, command):
+	
+	""" check the commands entered by user """
+
         urwid.disconnect_signal(self, self.footer, 'entered', self.command)
         if command in ['quit', 'exit', ':q', 'q']:
             raise urwid.ExitMainLoop()
@@ -172,6 +198,9 @@ class StoryView (object):
             self.view.set_focus('body')
             
     def on_click_down(self, button):
+
+	""" response to vote down button"""
+
         self.focus = self.listbox.get_focus()
         story = self.storyList.stories[self.focus[1]]
         storyID = story.storyID
@@ -179,12 +208,18 @@ class StoryView (object):
         self.view.set_footer(urwid.Text(result))	
 
     def login(self):
+
+	""" allow user input user name """
+
         self.footer = FooterEdit(u'username: ')
         self.view.set_footer(self.footer)
         self.view.set_focus('footer')
         urwid.connect_signal(self.footer, 'entered', self._user)
 
     def _user(self, name):
+
+	""" allow user input password """
+
         urwid.disconnect_signal(self.footer, 'entered', self._user)
         self.username = name
         self.footer = FooterEdit(u"password: ")
@@ -193,6 +228,9 @@ class StoryView (object):
         urwid.connect_signal(self.footer, 'entered', self._password)
 
     def _password(self, password):
+
+	""" log in and print response """
+
         urwid.disconnect_signal(self.footer, 'entered', self._password)
         self.password = password
         if self.r.login(self.username, self.password):
@@ -201,22 +239,33 @@ class StoryView (object):
         self.view.set_footer(urwid.Text(self.logged_in))       
 
     def get_text(self, comment_list):
+
+	""" store all comment text into a list """
+
         result_list = []
         for com in comment_list:
             result_list.append(com.text + "\nBy user: " + com.username)
         return result_list
 	
     def showComment(self, i):
+
+	""" show the comments or subcomments of focused item """
+
         item = self.run_time_list[i]
+	#if focus item is story, get comment list
+	#if focus item is comment, get subcomment
         if isinstance(item, base.Story):                                       
             comment_list = item.comment_list
         else:
             comment_list = item.subcomments
+	#store all comment objects into run_time_list
         a = i
         for com in comment_list:
             a = a + 1
             self.run_time_list.insert(a, com)
+	#get all texts of all comments
         com_str_list = self.get_text(comment_list)
+	#create widget
         b = i
         for com in com_str_list:
             b = b + 1
@@ -224,11 +273,15 @@ class StoryView (object):
                 self.items.insert(b, StoryWidget("Comments", com, self.items[i].weight-2))
             else:
                 self.items.insert(b, StoryWidget("Comment", com, self.items[i].weight-2))
-        self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
+        #show new widgets
+	self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
         self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
         self.loop.widget = self.view    	
 
     def close_comment(self, i):
+
+	""" close the comment page below focus widget """
+
         weight = self.items[i].weight
         a = i + 1
         while a < len(self.items) and self.items[a].weight < weight:
@@ -239,32 +292,42 @@ class StoryView (object):
         self.loop.widget = self.view
 
     def type_comment(self):
+
+	""" get user input for comment text """
+
         self.footer = FooterEdit('Comment text:> ')
         self.view.set_footer(self.footer)
         self.view.set_focus('footer')
         urwid.connect_signal(self.footer, 'entered', self.comment_on_item)        
     
     def comment_on_item(self, text):
+
+	""" comment to story or comment """
+	
+	#get user input
         urwid.disconnect_signal(self.footer, 'entered', self.comment_on_item)
         item = self.run_time_list[self.focus[1]]
-        if isinstance(item, base.Story):                                       
-            storyID = item.storyID
-            result = self.r.comment_on_story(storyID, text)
-            if result == True:
-                self.view.set_footer(urwid.Text("Comment Successfull! Please reload the comment page."))
-            else:
-                self.view.set_footer(urwid.Text(result))
-        else:
-            commentID = item.commentID
-            i = self.focus[1] - 1
-            while not isinstance(self.run_time_list[i], base.Story):
-                i = i - 1
-            storyID = self.run_time_list[i].storyID
-            result = self.r.reply_to_comment(storyID, commentID, text)
-            if result == True:
-                self.view.set_footer(urwid.Text("Reply Successfull! Please reload the comment page."))
-            else:
-                self.view.set_footer(urwid.Text(result))
+        #if focus widget is news title
+	if isinstance(item, base.Story):                                       
+		storyID = item.storyID
+            	result = self.r.comment_on_story(storyID, text)
+            	if result == True:
+                	self.view.set_footer(urwid.Text("Comment Successfull! Please reload the comment page."))
+            	else:
+                	self.view.set_footer(urwid.Text(result))
+        #if focus widget is comment or reply
+	else:
+		commentID = item.commentID
+            	i = self.focus[1] - 1
+		#go back and get the story id
+            	while not isinstance(self.run_time_list[i], base.Story):
+                	i = i - 1
+            	storyID = self.run_time_list[i].storyID
+            	result = self.r.reply_to_comment(storyID, commentID, text)
+            	if result == True:
+                	self.view.set_footer(urwid.Text("Reply Successfull! Please reload the comment page."))
+           	else:
+                	self.view.set_footer(urwid.Text(result))
         self.view.set_focus('body')
 
 if __name__ == '__main__':
