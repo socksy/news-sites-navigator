@@ -117,7 +117,7 @@ class StoryView (object):
         elif input in ['esc', ':']:
             self.set_command()
         elif input in ["f"]:
-            self.view.set_footer(urwid.Text(str(self.items[3].weight)))
+            self.view.set_footer(urwid.Text(str(self.run_time_list[4].text)))
         elif input in ["enter"]:
             self.focus = self.listbox.get_focus()
             if isinstance(self.focus[0], StoryWidget):
@@ -126,8 +126,8 @@ class StoryView (object):
                     weight = self.focus[0].weight
                     i = self.focus[1] + 1
                     while i < len(self.items) and self.items[i].weight < weight:
-                        self.items.pop(i)
-                        i = i + 1
+                        del self.items[i]
+                        del self.run_time_list[i]
                     self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
                     self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
                     self.loop.widget = self.view
@@ -213,7 +213,10 @@ class StoryView (object):
         b = i
         for com in com_str_list:
             b = b + 1
-            self.items.insert(b, StoryWidget("Comment", com, self.focus[0].weight-3))
+            if len(self.run_time_list[b].subcomments) > 0:
+                self.items.insert(b, StoryWidget("Comments", com, self.focus[0].weight-2))
+            else:
+                self.items.insert(b, StoryWidget("Comment", com, self.focus[0].weight-2))
         self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
         self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
         self.loop.widget = self.view    	
