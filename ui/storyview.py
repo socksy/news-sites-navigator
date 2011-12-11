@@ -1,6 +1,7 @@
 import urwid
 import random
 import Reddit
+import base
 
 up = urwid.Button(u'\u21d1')
 down = urwid.Button(u'\u21d3')
@@ -61,6 +62,7 @@ class StoryWidget (urwid.WidgetWrap):
     def __init__ (self, points, title, weight):
         self.opened = False
         self.title = title
+        self.weight = weight
         self.linktext = LinkText(title, wrap="space")
         story_text = urwid.AttrWrap(self.linktext,
                                     'point_focus', 'focus')
@@ -100,7 +102,7 @@ class StoryView (object):
         self.run_time_list = []
         for i in range(0,len(self.storyList.stories)):
             self.items.append(StoryWidget(i+1, self.storyList.stories[i].text, 10))
-            self.run_time_list.append((self.storyList.stories[i].storyID, None))
+            self.run_time_list.append(self.storyList.stories[i])
         urwid.connect_signal(up, 'click', self.on_click_up)
         urwid.connect_signal(down, 'click', self.on_click_down)
 
@@ -114,13 +116,30 @@ class StoryView (object):
             raise urwid.ExitMainLoop()
         elif input in ['esc', ':']:
             self.set_command()
+        elif input in ["f"]:
+            self.view.set_footer(urwid.Text(str(self.items[3].weight)))
         elif input in ["enter"]:
             self.focus = self.listbox.get_focus()
             if isinstance(self.focus[0], StoryWidget):
+                now_focus = self.focus[1]
                 if self.focus[0].opened:
+                    weight = self.focus[0].weight
+                    i = self.focus[1] + 1
+                    while i < len(self.items) and self.items[i].weight < weight:
+                        self.items.pop(i)
+                        i = i + 1
+                    self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
+                    self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
+                    self.loop.widget = self.view
+                    self.view.get_body().set_focus(now_focus)
                     self.focus[0].opened = False
                 else:
+                    item = self.run_time_list[self.focus[1]]
+                    if isinstance(item, base.Story):
+                        storyID = item.storyID
+                        self.run_time_list[self.focus[1]] = self.r.load_comments(storyID)
                     self.showComment(self.focus[1])
+                    self.view.get_body().set_focus(now_focus)
                     self.focus[0].opened = True
         			
     def set_command(self):
@@ -181,18 +200,26 @@ class StoryView (object):
         return result_list
 	
     def showComment(self, i):
-        storyID = self.run_time_list[i][0]
-        commentID = self.run_time_list[i][1]
-        comment_list = self.r.load_comments(storyID).comment_list
+        item = self.run_time_list[i]
+        if isinstance(item, base.Story):                                       
+            comment_list = item.comment_list
+        else:
+            comment_list = item.subcomments
+        a = i
+        for com in comment_list:
+            a = a + 1
+            self.run_time_list.insert(a, com)
         com_str_list = self.get_text(comment_list)
+        b = i
         for com in com_str_list:
-            i = i + 1
-            self.items.insert(i, StoryWidget("Comment", com, 6))
+            b = b + 1
+            self.items.insert(b, StoryWidget("Comment", com, self.focus[0].weight-3))
         self.listbox = urwid.ListBox(urwid.SimpleListWalker(self.items))
         self.view = urwid.Frame(urwid.AttrWrap(self.listbox, 'body'))
         self.loop.widget = self.view    	
 
 
+        
 		
 
 
