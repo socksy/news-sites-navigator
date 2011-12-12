@@ -182,9 +182,17 @@ class StoryView (object):
 	""" response to vote up button """
 	if self.listbox.get_focus()[0].title != "-------Load More News-------":
         	self.focus = self.listbox.get_focus()
-        	story = self.storyList.stories[self.focus[1]]
-        	storyID = story.storyID
-        	result = self.r.vote(storyID, None, True)
+        	item = self.run_time_list[self.focus[1]]
+        	if isinstance(item, base.Story):
+			itemID = item.storyID
+			result = self.r.vote(itemID, None, True)
+		else:
+			itemID = item.commentID
+			i = self.focus[1] - 1
+			while not isinstance(self.run_time_list[i], base.Story):
+                		i = i - 1
+            		storyID = self.run_time_list[i].storyID
+			result = self.r.vote(storyID, itemID, True)
         	self.view.set_footer(urwid.Text(result))	
 
     def command(self, command):
@@ -204,9 +212,17 @@ class StoryView (object):
 	""" response to vote down button"""
 	if self.listbox.get_focus()[0].title != "-------Load More News-------":
         	self.focus = self.listbox.get_focus()
-        	story = self.storyList.stories[self.focus[1]]
-        	storyID = story.storyID
-        	result = self.r.vote(storyID, None, False)
+        	item = self.run_time_list[self.focus[1]]
+        	if isinstance(item, base.Story):
+			itemID = item.storyID
+			result = self.r.vote(itemID, None, False)
+		else:
+			itemID = item.commentID
+			i = self.focus[1] - 1
+			while not isinstance(self.run_time_list[i], base.Story):
+                		i = i - 1
+            		storyID = self.run_time_list[i].storyID
+			result = self.r.vote(storyID, itemID, False)
         	self.view.set_footer(urwid.Text(result))	
 
     def login(self):
