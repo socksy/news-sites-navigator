@@ -145,9 +145,12 @@ class Reddit(session.Session):
     		"""
     	
 		result = None
-            	for rep in comment.replies:
-                	if rep.id == commentID:
-                    		result = rep
-                	else:
-                    		result = self.get_com(rep, commentID)
+		if comment.id == commentID:
+			result = comment
+		else:
+            		for rep in comment.replies:
+                		if rep.id == commentID:
+                    			result = rep
+                		else:
+                    			result = self.get_com(rep, commentID)
             	return result
