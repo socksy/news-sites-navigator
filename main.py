@@ -180,12 +180,12 @@ class StoryView (object):
     def on_click_up(self, button):
 
 	""" response to vote up button """
-
-        self.focus = self.listbox.get_focus()
-        story = self.storyList.stories[self.focus[1]]
-        storyID = story.storyID
-        result = self.r.vote(storyID, None, True)
-        self.view.set_footer(urwid.Text(result))	
+	if self.listbox.get_focus()[0].title != "-------Load More News-------":
+        	self.focus = self.listbox.get_focus()
+        	story = self.storyList.stories[self.focus[1]]
+        	storyID = story.storyID
+        	result = self.r.vote(storyID, None, True)
+        	self.view.set_footer(urwid.Text(result))	
 
     def command(self, command):
 	
@@ -202,12 +202,12 @@ class StoryView (object):
     def on_click_down(self, button):
 
 	""" response to vote down button"""
-
-        self.focus = self.listbox.get_focus()
-        story = self.storyList.stories[self.focus[1]]
-        storyID = story.storyID
-        result = self.r.vote(storyID, None, False)
-        self.view.set_footer(urwid.Text(result))	
+	if self.listbox.get_focus()[0].title != "-------Load More News-------":
+        	self.focus = self.listbox.get_focus()
+        	story = self.storyList.stories[self.focus[1]]
+        	storyID = story.storyID
+        	result = self.r.vote(storyID, None, False)
+        	self.view.set_footer(urwid.Text(result))	
 
     def login(self):
 
