@@ -7,9 +7,11 @@ To use, run main.py in your terminal. You should be presented with a view of a r
 # How to use: 
 - To quit at any point, press the q key whilst in navigation mode.
 - To see the comments of a story, select it and press the return key in navigation mode, which will load a selection of the best comments inline.
-- To see possible subcomments of a comment, press the return key on top of that comment.
+- To see subcomments of a comment, press the return key on top of that comment.
+- To comment on a news or reply to a comment, press "c"
 - To go in to command mode, press escape or type ':' (colon).
 - To exit the command mode, press escape.
 - To login, type "login" and enter your reddit username and password when prompted.
+- To open the page of news in browser, type "open" or "go"
 - This should automatically move you back to navigation mode, and it will now be possible to upvote or downvote a story.
 - To enter a comment on a story, press the 'c' key in navigation mode, over a story. You'll be prompted for comment text, which will be posted to that story or comment.
