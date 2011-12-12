@@ -1,0 +1,15 @@
+News Site Navigator in Python
+=================================
+This is a social news site navigator for the terminal written in Python.
+
+To use, run main.py in your terminal. You should be presented with a view of a reddit homepage. You can navigate the different stories by using the arrow keys on the keyboard, or if your terminal is advanced enough to take input from the mouse, then it is possible to select stories that way (Mac OS X terminal is not very good in this regard, nor in several others — a better terminal is [iTerm](http://www.iterm2.com/) for Mac use).
+
+# How to use: 
+- To quit at any point, press the q key whilst in navigation mode.
+- To see the comments of a story, select it and press the return key in navigation mode, which will load a selection of the best comments inline.
+- To see possible subcomments of a comment, press the return key on top of that comment.
+- To go in to command mode, press escape or type ':' (colon).
+- To exit the command mode, press escape.
+- To login, type "login" and enter your reddit username and password when prompted.
+- This should automatically move you back to navigation mode, and it will now be possible to upvote or downvote a story.
+- To enter a comment on a story, press the 'c' key in navigation mode, over a story. You'll be prompted for comment text, which will be posted to that story or comment.
