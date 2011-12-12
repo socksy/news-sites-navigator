@@ -1,65 +1,68 @@
 \documentclass{report}
 \setcounter{chapter}{0}
 \usepackage{graphicx}
+\usepackage{url}
+\usepackage{fullpage}
+\usepackage[protrusion=true,expansion=true]{microtype}
+
 %Makes it write "Part" instead of "Chapter" at the beginning of each Chapter
 \renewcommand{\chaptername}{Part} 
 
+%So I can experiment with better styles
+\newcommand{\codetitle}[1]{\textbf{{#1}}}
+
 \begin{document}
-\title{CS2006 --- Python-news browser}
+\title{CS2006 --- A Social News Navigator in \emph{Python}}
 \author{Chengyi Lin, Ross Apted and Ben Lovell}
 
 \maketitle
 \tableofcontents
 
 \chapter{Running instructions}
-	\paragraph{}...
+	\paragraph{}In order to run, run the executable ./main.py file. If for some reason it is not executable, try using \verb\chmod +x\ or running it using python (\verb\python main.py\). Whilst more comprehensive usage commands can be found by reading the readme, found in the README file, here are the basics:
+	\begin{itemize}
+		\item You can quit at any time whilst navigating with the `q' key.
+		\item You can navigate between stories with the arrow keys and press return to open and fold a story or comments
+		\item If you wish to login to comment or upvote something, go into command mode with escape or `:' (colon), and type ``login''.
+		\item A comment can be added using the `c' key or by typing ``comment'' in to the command prompt.
+		\item Over a story element the command ``open'' launches a web browser to view the link.
+	\end{itemize}
 
 \chapter{Introduction}
 	\section{Aim}
-
-		\paragraph{}The aim of this Project is to build text-based browser, that allows the user to navigate and use all the functionality of social news sites suach as reddit.
-
-We have successfully achieved this aim.
-
-		
-
+		\paragraph{}The aim of this Project is to build text-based browser that allows the user to navigate and use all the functionality of a social news site. We chose to use reddit, and have successfully implemented a solution that allows us to navigate and use the website.
 	\section{Requirements:}
-		\subsection{Primary requirements}
+		\subsection*{Primary requirements}
 			\begin{itemize}
-			\item Application allows user to browse a  the social news web site redddit.
-			\item The program retrieves headlines and displays relevant information about them in a list. This includes votes and titles.
-			\item The program allows the user to retrieve more information about the news story. This includes, source links, comments and replies along with there votes.
-			\item the prgrame allows the user to log in and post comments and stories.
+				\item First of all, the program does do what it should do, by being able to browse reddit.
+				\item It retrieves new headlines and displays the relevant information in an informative manner (the story's title, votes, etc).
+				\item More information can be retrieved about a story, in the form of its comments, by pressing the return key on an item and loading the comments on it, and so on with the subcomments.
+				\item It is possible to login to the site, and to then post comments or replies to a story or comment. However, it is not possible to post a new submission to Reddit --- mainly because the ability to do this now (since the creation of the practical) now requires the ability to pass a captcha. This is a little difficult, due to the fact that the program is a terminal program, and captchas require the ability to parse an image or audio file, and as such is no longer a trivial addition.
 			\end{itemize}
-			\paragraph{}All basic requirements were achieved.
-			
-			\subsection{Secondary Requirements}
+			\paragraph{}Other things for the project were also tackled:
+			\subsection*{Other Requirements}
 			\begin{itemize}
-			\item Program uses keyboard shortcuts. 
-			\item
-			\item 
-			\item 
-		
-			
+				\item Structuring the code to allow other news sites was accounted for with code structure accounting for it.
+				\item Technically, the program can be used offline as long as it is not shutdown after downloading the data. However, you can only see loaded links offline. No serialisation takes places, and as such, will only work in a persistent session (\texttt{man screen}).
+				\item Keyboard shortcuts were implemented to make the program easier to use and navigate.
 			\end{itemize}
 			\paragraph{}All additional requirements were achieved.
 
-\chapter{Description}
-		\section{base.py}
-			\paragraph{}....
-		\section{session.py}
-			\paragraph{}....
-		\section{Reddit.py}
-			\paragraph{}....
-		\section{storyview.py}
-			\paragraph{}....
-		
+\chapter{Code description}
+	\paragraph{}The program was separated into logically separate parts. This was to allow modularity in the scraping part and the user interface part. In theory, the user interface or scraper could be changed at any point to allow different systems for the interface and for the scraper.
+	\paragraph{}On the one hand, there was the scraping part. This was modularised by using abstract classes and functions that a concrete scraper would implement. These abstract parts were split into two parts: the objects of which the scraper would populate (such as a comment and story and so on), and the functions modifying this data (such as get comments on a story, comment on a story and so on). These were implemented in \codetitle{base.py} and \codetitle{session.py}.
+	\paragraph{}The concrete implementation for Reddit scraping can be found in \codetitle{reddit\_api.py}. This implementation uses an external library which wraps the reddit api in a Python interface. This can be found here: \\ \url{https://github.com/mellort/reddit_api}
+	\paragraph{}On the other hand there was the user interface part. The UI was implemented using an ncurses based Python library called ``Urwid'', which we used to create a navigatable terminal interface to present the different stories and so on. This referenced the reddit api interface, but only in ways that used the predefined functions --- it would have been perfectly possible to switch out the code with another interface. This is coded in the \codetitle{main.py}
+
+\chapter{Difficulties}
+	\paragraph{}Certain issues were had when writing the code. For the most part, these were all caused (directly and indirectly) by our dealings with the Urwid user interface library for Python. As one might expect from quite a few open source (and sometimes proprietary) libraries, documentation was less than it could have been. The tutorial explains very little, and resorts to small one line comments explaining very little (of the kind oft found in first year practical reports). The reference documentation had some doc strings explaining init methods of the different objects. All of these explanations appeared to assume knowledge of how the library worked in the first place to understand.
+	\paragraph{}The best documentation relevant to our needs was from a french blog, in which a haphazard explanation showed how to create a selectable list and to put an edit field inside of a footer element. This series of online tutorials can be found here: \url{http://www.nicosphere.net/series/urwid/} 
+	\paragraph{}Some of the ideas from this code were utilised in order to get a selectable list and to get an editable footer. It was soon found that to create stuff outside of the ecosystem of widgets provided in Urwid's default library then additional complexity was caused creating new widgets within Urwid. It often seemed that we were fighting \emph{against} the library, rather than utilising it to create big and wonderful Pythonian things. Becauseof this, the code we have written using it is convoluted, and difficult to comprehend at first. Long lines passing many arguments to an arbitrary widget caused long lines that could not easily be broken down to under 80 characters without making the code messier and the fact that one function has to send a signal to another in order to string together different inputs was rather annoying. This could be improved with another, higher order function that recursively creates more functions, but time limits did not permit these unpragmatic pursuits for programming beauty. 
+	\paragraph{}As we severely underestimated the complexity of the Urwid system, originally only one person was assigned to doing the UI for Python. It was found out later that this code would take more than that to tackle it, and as such significant amount of man hours were spent simply writing/rewriting each other's code regarding it.
 
 \chapter{Testing}
 	\section{How we Tested}
 		\paragraph{}
-Used command line to run program tying all possible, cases and took screen shots.
-	\section{Tests}
 		\begin{itemize}
 			\item Login --- Passed \newline \newline \includegraphics[height=50mm]{1}
 			\item Login with incorrect username or password --- Passed  \newline \newline \includegraphics[height=50mm]{2}
@@ -76,19 +79,9 @@ Used command line to run program tying all possible, cases and took screen shots
 			\item Reply to a comment or a reply --- Passed \newline \newline \includegraphics[height=28mm]{10}
 			\item Comment or reply without login --- Passed \newline \newline \includegraphics[height=70mm]{10_1}
 			\item Load more news --- Passed \newline \newline \includegraphics[height=160mm]{11}
-			
-\chapter{Problems encountered }
-	\paragraph{}...
+		\end{itemize}
 
-\chapter{How we worked as a team}
-	\paragraph{}...
-	
 \chapter{Conclusion}
-	\paragraph{} We successfully produced a text-based browser, using python. The browser allows the user to navigate and use all the functionality of a social news site. The browser retrieves and displays headlines, comments, votes, replies and source links. The browse also allows the user to login and post stories and comments as well as voting them. The browser also use keyboard shortcuts for easier navigability. We successfully worked as a team and met the basic requirements and well as some additional ones.  
-
-\chapter{References}
-	\paragraph{}...			
-			
-\end{itemize}
+	\paragraph{} We successfully produced a text-based browser, using python. The browser allows the user to navigate and use all the functionality of a social news site. The browser retrieves and displays headlines, comments, votes, replies and source links And also allows the user to login and post stories and comments --- as well as voting them. Keyboard shortcuts are also implemented for easier navigability. We worked together to implement the required functions, and had a working and successful program which went beyond what the spec required.
 
 \end{document}
