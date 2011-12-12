@@ -3,6 +3,7 @@
 import urwid
 import reddit_api as Reddit
 import base
+import webbrowser
 
 up = urwid.Button(u'\u21d1')
 down = urwid.Button(u'\u21d3')
@@ -111,7 +112,7 @@ class StoryView (object):
 	self.view.set_header(urwid.Text('Help: "q" -- quit, "c" -- comment or' + 
 					' reply to focus story or comment, "esc" or' +
 					' ":" -- open footer for command input' + 
-					'\ncommand support: "login" "quit"'))
+					'\ncommand support: "login" "quit" "open" "comment"'))
         self.loop = urwid.MainLoop(self.view, self.palette, unhandled_input=self.keystroke)
         self.loop.run()
         
@@ -119,6 +120,7 @@ class StoryView (object):
         if input in ('q', 'Q'):
             raise urwid.ExitMainLoop()
         elif input in ['esc', ':']:
+	    self.focus = self.listbox.get_focus()
             self.set_command()
         elif input in ["c"]:
             self.focus = self.listbox.get_focus()
@@ -204,6 +206,12 @@ class StoryView (object):
             raise urwid.ExitMainLoop()
         elif command == "login":
             self.login()
+        elif command in ['comment', 'reply']:
+            self.type_comment()
+        elif command in ['open', 'go']:
+            self.focus = self.listbox.get_focus()
+            if isinstance(self.run_time_list[self.focus[1]], base.Story):
+                webbrowser.open(self.run_time_list[self.focus[1]].content)
         else :
             self.view.set_focus('body')
             
@@ -253,8 +261,10 @@ class StoryView (object):
         self.password = password
         if self.r.login(self.username, self.password):
         	self.logged_in = "Login Successfull!"
+        else:
+            self.logged_in = "Login Unsuccessful :("
         self.view.set_focus('body')
-        self.view.set_footer(urwid.Text(self.logged_in))       
+        self.view.set_footer(urwid.Text(self.logged_in))         
 
     def get_text(self, comment_list):
 
@@ -330,7 +340,7 @@ class StoryView (object):
 		storyID = item.storyID
             	result = self.r.comment_on_story(storyID, text)
             	if result == True:
-                	self.view.set_footer(urwid.Text("Comment Successfull! Please reload the comment page."))
+                	self.view.set_footer(urwid.Text("Comment Successfull! Please reload the comment page 20 seconds later."))
             	else:
                 	self.view.set_footer(urwid.Text(result))
         #if focus widget is comment or reply
@@ -343,7 +353,7 @@ class StoryView (object):
             	storyID = self.run_time_list[i].storyID
             	result = self.r.reply_to_comment(storyID, commentID, text)
             	if result == True:
-                	self.view.set_footer(urwid.Text("Reply Successfull! Please reload the comment page."))
+                	self.view.set_footer(urwid.Text("Reply Successfull! Please reload the comment page 20 seconds later."))
            	else:
                 	self.view.set_footer(urwid.Text(result))
         self.view.set_focus('body')
